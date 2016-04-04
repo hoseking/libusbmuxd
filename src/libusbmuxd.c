@@ -31,18 +31,8 @@
 #endif
 
 #ifdef WIN32
-  #define USBMUXD_API __declspec( dllexport )
-#else
-  #ifdef HAVE_FVISIBILITY
-    #define USBMUXD_API __attribute__((visibility("default")))
-  #else
-    #define USBMUXD_API
-  #endif
-#endif
-
-#ifdef WIN32
-#include <windows.h>
 #include <winsock2.h>
+#include <windows.h>
 #define sleep(x) Sleep(x*1000)
 #ifndef EPROTO
 #define EPROTO 134
@@ -64,7 +54,9 @@
 #define USBMUXD_SOCKET_NAME "usbmuxd"
 #endif /* HAVE_INOTIFY */
 
+#ifndef WIN32
 #include <unistd.h>
+#endif
 #include <signal.h>
 
 #include <plist/plist.h>
@@ -755,7 +747,7 @@ static void *device_monitor(void *data)
 	return NULL;
 }
 
-USBMUXD_API int usbmuxd_subscribe(usbmuxd_event_cb_t callback, void *user_data)
+int usbmuxd_subscribe(usbmuxd_event_cb_t callback, void *user_data)
 {
 	int res;
 
@@ -780,7 +772,7 @@ USBMUXD_API int usbmuxd_subscribe(usbmuxd_event_cb_t callback, void *user_data)
 	return 0;
 }
 
-USBMUXD_API int usbmuxd_unsubscribe()
+int usbmuxd_unsubscribe()
 {
 	event_cb = NULL;
 
@@ -823,7 +815,7 @@ static usbmuxd_device_info_t *device_info_from_device_record(struct usbmuxd_devi
 	return devinfo;
 }
 
-USBMUXD_API int usbmuxd_get_device_list(usbmuxd_device_info_t **device_list)
+int usbmuxd_get_device_list(usbmuxd_device_info_t **device_list)
 {
 	int sfd;
 	int tag;
@@ -976,7 +968,7 @@ got_device_list:
 	return dev_cnt;
 }
 
-USBMUXD_API int usbmuxd_device_list_free(usbmuxd_device_info_t **device_list)
+int usbmuxd_device_list_free(usbmuxd_device_info_t **device_list)
 {
 	if (device_list) {
 		free(*device_list);
@@ -984,7 +976,7 @@ USBMUXD_API int usbmuxd_device_list_free(usbmuxd_device_info_t **device_list)
 	return 0;
 }
 
-USBMUXD_API int usbmuxd_get_device_by_udid(const char *udid, usbmuxd_device_info_t *device)
+int usbmuxd_get_device_by_udid(const char *udid, usbmuxd_device_info_t *device)
 {
 	usbmuxd_device_info_t *dev_list = NULL;
 
@@ -1019,7 +1011,7 @@ USBMUXD_API int usbmuxd_get_device_by_udid(const char *udid, usbmuxd_device_info
 	return result;
 }
 
-USBMUXD_API int usbmuxd_connect(const int handle, const unsigned short port)
+int usbmuxd_connect(const int handle, const unsigned short port)
 {
 	int sfd;
 	int tag;
@@ -1064,12 +1056,12 @@ retry:
 	return -1;
 }
 
-USBMUXD_API int usbmuxd_disconnect(int sfd)
+int usbmuxd_disconnect(int sfd)
 {
 	return socket_close(sfd);
 }
 
-USBMUXD_API int usbmuxd_send(int sfd, const char *data, uint32_t len, uint32_t *sent_bytes)
+int usbmuxd_send(int sfd, const char *data, uint32_t len, uint32_t *sent_bytes)
 {
 	int num_sent;
 
@@ -1092,7 +1084,7 @@ USBMUXD_API int usbmuxd_send(int sfd, const char *data, uint32_t len, uint32_t *
 	return 0;
 }
 
-USBMUXD_API int usbmuxd_recv_timeout(int sfd, char *data, uint32_t len, uint32_t *recv_bytes, unsigned int timeout)
+int usbmuxd_recv_timeout(int sfd, char *data, uint32_t len, uint32_t *recv_bytes, unsigned int timeout)
 {
 	int num_recv = socket_receive_timeout(sfd, (void*)data, len, 0, timeout);
 	if (num_recv < 0) {
@@ -1105,12 +1097,12 @@ USBMUXD_API int usbmuxd_recv_timeout(int sfd, char *data, uint32_t len, uint32_t
 	return 0;
 }
 
-USBMUXD_API int usbmuxd_recv(int sfd, char *data, uint32_t len, uint32_t *recv_bytes)
+int usbmuxd_recv(int sfd, char *data, uint32_t len, uint32_t *recv_bytes)
 {
 	return usbmuxd_recv_timeout(sfd, data, len, recv_bytes, 5000);
 }
 
-USBMUXD_API int usbmuxd_read_buid(char **buid)
+int usbmuxd_read_buid(char **buid)
 {
 	int sfd;
 	int tag;
@@ -1151,7 +1143,7 @@ USBMUXD_API int usbmuxd_read_buid(char **buid)
 	return ret;
 }
 
-USBMUXD_API int usbmuxd_read_pair_record(const char* record_id, char **record_data, uint32_t *record_size)
+int usbmuxd_read_pair_record(const char* record_id, char **record_data, uint32_t *record_size)
 {
 	int sfd;
 	int tag;
@@ -1199,7 +1191,7 @@ USBMUXD_API int usbmuxd_read_pair_record(const char* record_id, char **record_da
 	return ret;
 }
 
-USBMUXD_API int usbmuxd_save_pair_record(const char* record_id, const char *record_data, uint32_t record_size)
+int usbmuxd_save_pair_record(const char* record_id, const char *record_data, uint32_t record_size)
 {
 	int sfd;
 	int tag;
@@ -1238,7 +1230,7 @@ USBMUXD_API int usbmuxd_save_pair_record(const char* record_id, const char *reco
 	return ret;
 }
 
-USBMUXD_API int usbmuxd_delete_pair_record(const char* record_id)
+int usbmuxd_delete_pair_record(const char* record_id)
 {
 	int sfd;
 	int tag;
@@ -1275,7 +1267,7 @@ USBMUXD_API int usbmuxd_delete_pair_record(const char* record_id)
 	return ret;
 }
 
-USBMUXD_API void libusbmuxd_set_use_inotify(int set)
+void libusbmuxd_set_use_inotify(int set)
 {
 #ifdef HAVE_INOTIFY
 	use_inotify = set;
@@ -1283,7 +1275,7 @@ USBMUXD_API void libusbmuxd_set_use_inotify(int set)
 	return;
 }
 
-USBMUXD_API void libusbmuxd_set_debug_level(int level)
+void libusbmuxd_set_debug_level(int level)
 {
 	libusbmuxd_debug = level;
 	socket_set_verbose(level);
